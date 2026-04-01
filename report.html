@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Report - Student Expense Splitter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <h1>💰 Student Expense Splitter</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/">Dashboard</a></li>
+                <li><a href="/add_expense">Add Expense</a></li>
+                <li><a href="/view_expenses">View Expenses</a></li>
+                <li><a href="/report" class="active">Monthly Report</a></li>
+            </ul>
+        </nav>
+
+        <div class="report-container">
+            <div class="report-header">
+                <h2>Monthly Expense Report</h2>
+                <form method="GET" action="/report" class="month-selector">
+                    <input type="month" name="month" value="{{ selected_month }}" 
+                           onchange="this.form.submit()">
+                </form>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="summary-cards">
+                <div class="summary-card">
+                    <h3>Total Expenses</h3>
+                    <p class="big-number">₹{{ "%.2f"|format(monthly_summary.total or 0) }}</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Number of Transactions</h3>
+                    <p class="big-number">{{ monthly_summary.count or 0 }}</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Average per Transaction</h3>
+                    <p class="big-number">₹{{ "%.2f"|format((monthly_summary.total or 0) / (monthly_summary.count or 1)) }}</p>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3>Daily Spending Trend</h3>
+                    <canvas id="dailyChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Category Distribution</h3>
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Detailed Breakdown -->
+            <div class="section">
+                <h3>Category-wise Detailed Breakdown</h3>
+                <div class="category-details">
+                    {% for category in category_breakdown %}
+                    <div class="detail-item">
+                        <div class="detail-info">
+                            <span class="category-name">{{ category.category }}</span>
+                            <span class="detail-stats">{{ category.count }} transactions</span>
+                        </div>
+                        <div class="detail-amount">₹{{ "%.2f"|format(category.total) }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Daily Breakdown Table -->
+            <div class="section">
+                <h3>Daily Breakdown</h3>
+                <div class="daily-table">
+                    <table class="expense-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for day in daily_breakdown %}
+                            <tr>
+                                <td>{{ day.expense_date }}</td>
+                                <td class="amount">₹{{ "%.2f"|format(day.daily_total) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Daily spending chart
+        const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+        const dailyData = {{ daily_breakdown|tojson }};
+        
+        new Chart(dailyCtx, {
+            type: 'line',
+            data: {
+                labels: dailyData.map(d => d.expense_date),
+                datasets: [{
+                    label: 'Daily Expenses',
+                    data: dailyData.map(d => d.daily_total),
+                    borderColor: '#FF6B6B',
+                    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                }
+            }
+        });
+
+        // Category chart
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        const categoryData = {{ category_breakdown|tojson }};
+        
+        new Chart(categoryCtx, {
+            type: 'pie',
+            data: {
+                labels: categoryData.map(c => c.category),
+                datasets: [{
+                    data: categoryData.map(c => c.total),
+                    backgroundColor: [
+                        '#FF6B6B',
+                        '#4ECDC4',
+                        '#45B7D1',
+                        '#96CEB4',
+                        '#FFEAA7',
+                        '#DDA0DD',
+                        '#F7D794'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

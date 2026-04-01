@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Expenses - Student Expense Splitter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <h1>💰 Student Expense Splitter</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/">Dashboard</a></li>
+                <li><a href="/add_expense">Add Expense</a></li>
+                <li><a href="/view_expenses" class="active">View Expenses</a></li>
+                <li><a href="/report">Monthly Report</a></li>
+            </ul>
+        </nav>
+
+        <div class="expenses-container">
+            <div class="header-section">
+                <h2>All Expenses</h2>
+                <div class="total-amount">
+                    <strong>Total:</strong> ₹{{ "%.2f"|format(total) }}
+                </div>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <form method="GET" action="/view_expenses" class="filter-form">
+                    <div class="filter-group">
+                        <label>From:</label>
+                        <input type="date" name="start_date" value="{{ start_date }}">
+                    </div>
+                    <div class="filter-group">
+                        <label>To:</label>
+                        <input type="date" name="end_date" value="{{ end_date }}">
+                    </div>
+                    <div class="filter-group">
+                        <label>Category:</label>
+                        <select name="category">
+                            <option value="All">All Categories</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat }}">{{ cat }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary">Filter</button>
+                    <a href="/view_expenses" class="btn-secondary">Reset</a>
+                </form>
+            </div>
+
+            <!-- Expenses Table -->
+            <div class="expense-table-container">
+                <table class="expense-table full-width">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Paid By</th>
+                            <th>Split With</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for expense in expenses %}
+                        <tr>
+                            <td>{{ expense.expense_date }}</td>
+                            <td><span class="category-badge">{{ expense.category }}</span></td>
+                            <td>{{ expense.description }}</td>
+                            <td class="amount">₹{{ "%.2f"|format(expense.amount) }}</td>
+                            <td>{{ expense.paid_by or 'Self' }}</td>
+                            <td>{{ expense.split_with or '-' }}</td>
+                            <td class="actions">
+                                <a href="/edit_expense/{{ expense.id }}" class="btn-edit">Edit</a>
+                                <a href="/delete_expense/{{ expense.id }}" class="btn-delete" 
+                                   onclick="return confirm('Are you sure you want to delete this expense?')">Delete</a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="no-data">No expenses found for the selected period.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

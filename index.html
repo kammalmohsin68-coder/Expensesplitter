@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Expense Splitter - Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation Bar -->
+        <nav class="navbar">
+            <div class="nav-brand">
+                <h1>💰 Student Expense Splitter</h1>
+                <p>Welcome, {{ user.username }} | Room: {{ user.room_number }}</p>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/" class="active">Dashboard</a></li>
+                <li><a href="/add_expense">Add Expense</a></li>
+                <li><a href="/view_expenses">View Expenses</a></li>
+                <li><a href="/report">Monthly Report</a></li>
+            </ul>
+        </nav>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Dashboard Content -->
+        <div class="dashboard">
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-info">
+                        <h3>This Month's Total</h3>
+                        <p class="stat-value">₹{{ "%.2f"|format(current_month_total) }}</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-info">
+                        <h3>Daily Average</h3>
+                        <p class="stat-value">₹{{ "%.2f"|format(avg_daily) }}</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🍽️</div>
+                    <div class="stat-info">
+                        <h3>Today's Expenses</h3>
+                        <p class="stat-value">₹{{ "%.2f"|format(today_expenses|sum(attribute='amount')) }}</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-info">
+                        <h3>Split Expenses</h3>
+                        <p class="stat-value">{{ category_spending|length }} Categories</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Today's Expenses -->
+            <div class="section">
+                <div class="section-header">
+                    <h2>Today's Expenses</h2>
+                    <a href="/add_expense" class="btn-primary">+ Add Expense</a>
+                </div>
+                <div class="expense-list">
+                    {% if today_expenses %}
+                        <table class="expense-table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Category</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                    <th>Split With</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for expense in today_expenses %}
+                                <tr>
+                                    <td>{{ expense.created_at.strftime('%I:%M %p') }}</td>
+                                    <td><span class="category-badge">{{ expense.category }}</span></td>
+                                    <td>{{ expense.description }}</td>
+                                    <td class="amount">₹{{ "%.2f"|format(expense.amount) }}</td>
+                                    <td>{{ expense.split_with or 'Self' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p class="no-data">No expenses recorded today. Add your first expense!</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Category-wise Spending -->
+            <div class="section">
+                <h2>Category-wise Spending (This Month)</h2>
+                <div class="category-grid">
+                    {% for category in category_spending %}
+                    <div class="category-card">
+                        <div class="category-name">{{ category.category }}</div>
+                        <div class="category-amount">₹{{ "%.2f"|format(category.total) }}</div>
+                        <div class="category-bar">
+                            <div class="bar-fill" style="width: {{ (category.total / current_month_total * 100) if current_month_total > 0 else 0 }}%"></div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="no-data">No expenses this month.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
